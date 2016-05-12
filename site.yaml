@@ -1,0 +1,48 @@
+---
+- hosts: localhost
+  become: yes
+  become_method: sudo
+  roles:
+    - { role: create_VM, name: couchdb, auth: project.sh, flavor: m2.medium, host: couchdb }
+    - { role: create_volume, name: test, auth: project.sh, zone: melbourne-np, size: 175, path: auto, target: couchdb }
+    - { role: create_VM, name: sentiment, auth: project.sh, flavor: m2.medium, host: sentiment }
+    - { role: create_VM, name: webapp, auth: project.sh, flavor: m2.small, host: webapp }
+    - { role: create_VM, name: streaming_API, auth: individual.sh, flavor: m2.small, host: streaming_API }
+    - { role: create_VM, name: search_API, auth: individual.sh, flavor: m2.small, host: search_API }
+
+- hosts: couchdb
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  roles:
+    - install_couchdb
+    - add_geocouch
+    - mount_volume
+
+- hosts: localhost
+  become: yes
+  become_method: sudo
+  roles:
+    - copy_config
+
+- hosts: streaming_API
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  roles:
+    - { role: install_harvester, mode: streaming }
+
+- hosts: search_API
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  roles:
+    - { role: install_harvester, mode: search }
+
+- hosts: webapp
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  roles:
+    - install_webapp
+

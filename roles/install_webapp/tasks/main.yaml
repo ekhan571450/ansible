@@ -1,0 +1,10 @@
+    - name: apt-get update
+      apt: update_cache=yes
+    - name: Install apache2
+      apt: pkg=apache2 state=present
+    - name: Install Git
+      apt: pkg=git state=present
+    - name: Git clone
+      git: repo=https://github.com/comp90024/dashboard.git dest=/var/html
+    - name: Run WebApp
+      service: name=apache2 state=started

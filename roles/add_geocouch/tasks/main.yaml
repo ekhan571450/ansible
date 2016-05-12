@@ -1,0 +1,28 @@
+    - name: Install Git
+      apt: pkg=git state=present
+    - name: Git clone
+      git: repo=https://github.com/couchbase/geocouch.git dest=opt version=newvtree
+    - name: Make Dev
+      command: make chdir=/home/ubuntu/opt/couchdb/
+    - name: Compile GeoCouch
+      shell: COUCH_SRC=/home/couchdb/opt/couchdb/src/couchdb make couchdb
+      args:
+        executable: /bin/bash
+    - name : Copy Confing
+      command: cp home/ubuntu/opt/couchdb/gc-couchdb/etc/couchdb/default.d/geocouch.ini /home/ubuntu/opt/couchdb/etc/couchdb/default.d/
+    - name : GeoCouch path update 1-2
+      command: cp –avr home/ubuntu/opt/couchdb/gc-couchdb home/ubuntu/opt/couchdb/src/
+    - name : GeoCouch path update 2-2
+      command: cp –avr home/ubuntu/opt/couchdb/vtree home/ubuntu/opt/couchdb/src/
+    - name: Running test
+      shell: COUCH_SRC=/home/couchdb/opt/couchdb/src/couchdb make couchdb-check
+      args:
+        executable: /bin/bash
+    - name: kill process 1-2
+      command: couchdb –k
+    - name: kill process 2-2
+      command: pkill beam
+    - name: Launch CouchDB
+      shell: ERL_LIBS=”/home/ubuntu/opt/geocouch” /home/ubuntu/opt/couchdb/utils/run -b
+      args:
+        executable: /bin/bash

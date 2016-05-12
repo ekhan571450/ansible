@@ -1,0 +1,19 @@
+    - name: Make Directory
+      file: path=/home/ubuntu/mnt/couchdb state=directory owner=ubuntu
+    - name: Add volume info into fstab file
+      lineinfile: dest=/etc/fstab line="/dev/vdb1               /mnt/couchdb            ext3    defaults        1 2"
+    - name: Mount the partition
+      command: mount /home/ubuntu/mnt/couchdb
+    - name: Back up existing file
+      command: mv /home/ubuntu/opt/couchdb/tmp/lib/* /home/ubuntu/mnt/couchdb/
+    - name: Remove existing library
+      command: rm -rf /home/ubuntu/opt/couchdb/tmp/lib
+    - name: Make a symbolic link for the databases
+      file: src=/home/ubuntu/mnt/couchdb/ dest=/home/ubuntu/opt/couchdb/tmp/lib state=link owner=ubuntu
+    - name: Make a symbolic link for log 1-3
+      file: src=/home/ubuntu/mnt/couchdb/logs/couchdb.stderr dest=/home/ubuntu/opt/couchdb/couchdb.stderr state=link owner=ubuntu
+    - name: Make a symbolic link for log 2-3
+      file: src=/home/ubuntu/mnt/couchdb/logs/couchdb.stdout dest=/home/ubuntu/opt/couchdb/couchdb.stdout state=link owner=ubuntu
+    - name: Make a symbolic link for log 3-3
+      file: src=/home/ubuntu/mnt/couchdb/log/couch.log dest=/home/ubuntu/opt/couchdb/tmp/log/couch.log state=link owner=ubuntu
+

@@ -1,0 +1,22 @@
+
+    - name: Loading working directory info
+      command: pwd
+      register : directory
+    - name: Install Git
+      apt: pkg=git state=present
+    - name: Git clone
+      git: repo=https://github.com/ekhan571450/py-tweet-harvesters.git dest=opt
+    - name: apt-get update
+      apt: update_cache=yes
+    - name: Install pip
+      apt: pkg=python3-pip state=present
+    - name: Install tweepy
+      command: pip3 install tweepy
+    - name: Install couchdb
+      command: pip3 install couchdb
+    - name : Run Search API
+      command: python3 follower.py --id 0 -- nodes 1 --couchip {{ server_ip }} --consumerkey {{ API_KEY_SEARCH }} --consumersecret {{ API_SECRET_SEARCH }} --tokenkey {{ TOKEN_KEY_SEARCH }} --tokensecret {{ TOKEN_SECRET_SEARCH }}
+      when: mode="search"
+    - name : Run Streaming API
+      command: python3 streaming.py --couchip {{ server_ip }} --consumerkey {{ API_KEY_STREAMING }} --consumersecret {{ API_SECRET_STREAMING }} --tokenkey {{ TOKEN_KEY_STREAMING }} --tokensecret {{ TOKEN_SECRET_STREAMING }}
+      when: mode="search"

@@ -1,0 +1,61 @@
+    
+    - name: Create CouchDB User
+      user: name=couchdb password=unimelb
+    - name: Add CouchDB User to Admin Group
+      command: gpasswd -a couchdb sudo
+    - name: apt-get update
+      apt: update_cache=yes
+    - name: Install CouchDB Dependencies
+      apt: pkg=couchdb state=build-dep
+    - name: Install Python-Software-Properties
+      apt: pkg=python-software-properties state=present
+    - name: Add Repository
+      apt_repository: repo='ppa:launchpad/ppa'
+    - name: Install Developer Tool Dependencies
+      apt: pkg={{ item }} state=present
+      with_items:
+        - erlang
+        - erlang-base-hipe
+        - erlang-manpages
+        - erlang-nox
+    - name: Install CouchDB Developer Dependencies
+      apt: pkg={{ item }} state=present
+      with_items:
+        - libcurl4-gnutls-dev
+        - libtool
+    - name: Create installation directory
+      file: path=/home/ubuntu/opt state=directory owner=ubuntu
+    #- name: Download CouchDB 1.6.1
+    #  get_url: url=http://apache.mirror.digitalpacific.com.au/couchdb/source/1.6.1/apache-couchdb-1.6.1.tar.gz dest=/home/ubuntu/opt/apache-couchdb-1.6.1.tar.gz
+    #- name: Create unarchive directory
+    #  file: path=/home/ubuntu/opt/couchdb state=directory owner=ubuntu
+    - name: Unarchive CouchDB
+      unarchive: src=http://apache.mirror.digitalpacific.com.au/couchdb/source/1.6.1/apache-couchdb-1.6.1.tar.gz dest=/home/ubuntu/opt/ copy=no
+    - name: Change directory name
+      command: mv /home/ubuntu/opt/apache-couchdb-1.6.1/ /home/ubuntu/opt/couchdb
+    - name: Configure CouchDB
+      command: ./configure chdir=/home/ubuntu/opt/couchdb/
+    - name: Make CouchDB
+      command: make chdir=/home/ubuntu/opt/couchdb/
+    - name: Make Install CouchDB
+      command: make install chdir=/home/ubuntu/opt/couchdb/
+    - name: Change home directory for couchdb user 1
+      command: usermod -d /usr/local/var/lib/couchdb/ couchdb
+    - name: Change home directory for couchdb user 2
+      file: path={{ item }} owner=couchdb mode=0770 state=directory recurse=yes
+      with_items:
+        - path=/usr/local/var/lib/couchdb
+        - path=/usr/local/var/log/couchdb
+        - path=/usr/local/var/run/couchdb
+    - name: Change home directory for couchdb user 3
+      file: path=/usr/local/etc/couchdb owner=couchdb state=directory recurse=yes
+    - name: Change home directory for couchdb user 4
+      file: path=/usr/local/etc/couchdb/{{ item }}.ini mode=664
+      with_items:
+        - default
+        - local
+    - name: Change home directory for couchdb user 5
+      file: path=/usr/local/etc/couchdb/{{ item }}.d mode=775 state=directory recurse=yes
+      with_items:
+        - default
+        - local

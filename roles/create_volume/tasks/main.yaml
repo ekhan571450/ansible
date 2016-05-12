@@ -1,0 +1,46 @@
+    
+    - name: Loading working directory info
+      command: pwd
+      register : directory
+
+    - name: Check volume
+      shell: source {{ directory.stdout }}/{{ auth }} && cinder show {{ name }} | egrep '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' -o | tail -1
+      register : volume_exist
+      ignore_errors: yes
+      args:
+        executable: /bin/bash
+
+    - name: Create volume
+      shell: source {{ directory.stdout }}/{{ auth }} && cinder create --name {{ name }} --availability-zone {{ zone }} {{ size }} | egrep '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' -o
+      when: volume_exist.rc > 0
+      register: volume_id
+      args:
+        executable: /bin/bash
+
+    - name: Check volume attachment
+      shell: source {{ directory.stdout }}/{{ auth }} && nova volume-attachments {{ target }} | grep {{ volume_id.stdout }}
+      register : is_attached
+      when: volume_exist.rc > 0
+      ignore_errors: yes
+      args:
+        executable: /bin/bash
+
+    - name: Check volume attachment
+      shell: source {{ directory.stdout }}/{{ auth }} && nova volume-attachments {{ target }} | grep {{ volume_exist.stdout }}
+      register : is_attached
+      when: volume_exist.rc == 0
+      ignore_errors: yes
+      args:
+        executable: /bin/bash
+
+    - name: Attach volume
+      shell: source {{ directory.stdout }}/{{ auth }} && nova volume-attach {{ target }} {{ volume_id.stdout }} {{ path }}
+      when: is_attached.stdout == "" and volume_exist.rc > 0
+      args:
+        executable: /bin/bash
+
+    - name: Attach volume
+      shell: source {{ directory.stdout }}/{{ auth }} && nova volume-attach {{ target }} {{ volume_exist.stdout }} {{ path }}
+      when: is_attached.stdout == "" and volume_exist.rc == 0
+      args:
+        executable: /bin/bash

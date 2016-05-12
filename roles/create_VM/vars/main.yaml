@@ -1,0 +1,8 @@
+---
+
+image_default: c8663e68-921c-4e0a-9048-d9e042a4b41f
+security_group_default: default
+key_name: twitter
+availability_zone: melbourne-np
+
+

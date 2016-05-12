@@ -1,0 +1,5 @@
+    - name: Loading working directory info
+      command: pwd
+      register : directory
+    - name: Upload config file
+      copy: src={{ directory.stdout }}/vars/local_dev.ini dest=/home/ubuntu/opt/couchdb/etc/couchdb/

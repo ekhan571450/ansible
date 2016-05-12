@@ -1,0 +1,40 @@
+
+    - name: Loading working directory info
+      command: pwd
+      register : directory
+
+    - name: Check keypair
+      shell: source {{ directory.stdout }}/{{ auth }} && nova keypair-show {{ key_name }}
+      register : keylist
+      ignore_errors: yes
+      args:
+        executable: /bin/bash
+    - name: Create keypair
+      shell: source {{ directory.stdout }}/{{ auth }} && nova keypair-add --pub-key {{ directory.stdout }}/vars/key.pub {{ key_name }}
+      when: keylist.rc > 0
+      args:
+        executable: /bin/bash
+    - name: Check VM
+      shell: source {{ directory.stdout }}/{{ auth }} && nova show {{ name }}
+      register : instance_exist
+      ignore_errors: yes
+
+      args:
+        executable: /bin/bash
+    - name: Create VM ({{ name }})
+      shell: source {{ directory.stdout }}/{{ auth }} && nova boot {{ name }} --flavor {{ flavor }} --image {{ image_default}} --key-name {{ key_name }} --security-groups {{ security_group_default }} --availability-zone {{ availability_zone }}
+      when: instance_exist.rc > 0
+      args:
+        executable: /bin/bash
+    - name: wait
+      wait_for: path=site.yaml delay=100
+      when: instance_exist.rc > 0
+    - name: Get IP address ({{ name }})
+      shell: source {{ directory.stdout }}/{{ auth }} && nova show {{ name }} | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b" | uniq
+      register: ip
+      args:
+        executable: /bin/bash
+    - name: Register IP
+      set_fact: server_ip="{{ ip.stdout }}"
+    - name: Add {{ name }} instance to hosts
+      add_host: name={{ ip.stdout }} groups={{ host }}
